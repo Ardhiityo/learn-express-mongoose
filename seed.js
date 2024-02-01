@@ -13,49 +13,49 @@ const seedProduct = [{
         "brand": "Hollister",
         "price": 750000,
         "color": "biru muda",
-        "size": "S",
+        "category": "Baju",
     },
     {
         "name": "Sweater",
         "brand": "Gap",
         "price": 650000,
         "color": "merah muda",
-        "size": "L"
+        "category": "Fashion"
     },
     {
         "name": "Tas Ransel",
         "brand": "Herschel",
         "price": 1500000,
         "color": "biru",
-        "size": "M"
+        "category": "Fashion"
     },
     {
         "name": "Baju Renang",
         "brand": "Speedo",
         "price": 500000,
         "color": "biru tua",
-        "size": "L",
+        "category": "Baju",
     },
     {
         "name": "Topi Baseball",
         "brand": "New Era",
         "price": 350000,
         "color": "hitam",
-        "size": "M",
+        "category": "Fashion",
     },
     {
         "name": "Rompi",
         "brand": "Zara",
         "price": 850000,
         "color": "abu-abu",
-        "size": "L"
+        "category": "Baju"
     },
     {
         "name": "Jas",
         "brand": "Hugo Boss",
         "price": 4500000,
         "color": "hitam",
-        "size": "XL",
+        "category": "Fashion",
     },
 ]
 

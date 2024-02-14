@@ -24,11 +24,18 @@ app.use(express.urlencoded({
 app.use(methodOverride('_method'));
 
 
+function wrapAsync(fn) {
+    return function (req, res, next) {
+        fn(req, res, next).catch(err => next(err));
+    }
+}
+
+
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-app.get('/products', async (req, res) => {
+app.get('/products', wrapAsync(async (req, res) => {
     const {
         category
     } = req.query;
@@ -47,80 +54,65 @@ app.get('/products', async (req, res) => {
             category: 'all'
         });
     }
-});
+}));
 
 app.get('/products/create', (req, res) => {
     res.render('products/create');
 });
 
-app.get('/products/edit/:id', async (req, res, next) => {
-    try {
-        const {
-            id
-        } = req.params;
-        const products = await Product.findById(id);
-        console.log(products);
-        res.render('products/edit', {
-            products
-        });
-    } catch (error) {
-        next(new errorHandler('Terjadi kesalahan', 404));
-    }
-});
+app.get('/products/edit/:id', wrapAsync(async (req, res, next) => {
+    const {
+        id
+    } = req.params;
+    const products = await Product.findById(id);
+    console.log(products);
+    res.render('products/edit', {
+        products
+    });
+}));
 
-app.get('/products/:id', async (req, res, next) => {
-    try {
-        const {
-            id
-        } = req.params;
-        const products = await Product.findById(id);
-        res.render('products/show', {
-            products
-        });
-    } catch (error) {
-        next(new errorHandler('Terjadi kesalahan', 404));
-    }
-});
+app.get('/products/:id', wrapAsync(async (req, res, next) => {
+    const {
+        id
+    } = req.params;
+    const products = await Product.findById(id);
+    res.render('products/show', {
+        products
+    });
+}));
 
-app.put('/products/:id', async (req, res, next) => {
-    try {
-        const {
-            id
-        } = req.params;
-        const products = await Product.findByIdAndUpdate(id, req.body, {
-            runValidators: true
-        });
-        res.redirect(`/products/${products.id}`);
-    } catch (error) {
-        next(new errorHandler('Gagal Update', 404));
-    }
-});
+app.put('/products/:id', wrapAsync(async (req, res, next) => {
+    const {
+        id
+    } = req.params;
+    const products = await Product.findByIdAndUpdate(id, req.body, {
+        runValidators: true
+    });
+    res.redirect(`/products/${products.id}`);
+}));
 
 app.post('/products', (req, res, next) => {
-    try {
-        const products = new Product(req.body);
-        products.save();
-        res.redirect(`/products/${products.id}`);
-    } catch (error) {
-        next(new errorHandler('Terjadi Kesalahan', 404));
-    }
+    const products = new Product(req.body);
+    products.save();
+    res.redirect(`/products/${products.id}`);
 });
 
-app.delete('/products/delete/:id', async (req, res, next) => {
-    try {
-        const {
-            id
-        } = req.params;
-        await Product.findByIdAndDelete(id);
-        res.redirect(`/products`);
-    } catch (error) {
-        next(new errorHandler('Terjadi Kesalahan', 404));
-    }
+app.delete('/products/delete/:id', wrapAsync(async (req, res, next) => {
+    const {
+        id
+    } = req.params;
+    await Product.findByIdAndDelete(id);
+    res.redirect(`/products`);
+}))
+
+app.use((err, req, res, next) => {
+    console.dir(err);
+    next(err);
 })
 
 app.use((err, req, res, next) => {
     const {
-        status = 404, message = 'terjadi kesalahan'
+        status = 500, message = 'terjadi kesalahan'
     } = err;
     res.status(status).send(message);
 })

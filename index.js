@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const morgan = require('morgan');
 const app = express();
-const errorHandler = require('./ErrorHandler');
+const ErrorHandler = require('./ErrorHandler');
 
 const Product = require('./models/product');
 
@@ -26,10 +26,9 @@ app.use(methodOverride('_method'));
 
 function wrapAsync(fn) {
     return function (req, res, next) {
-        fn(req, res, next).catch(err => next(err));
+        fn(req, res, next).catch((err) => next(err));
     }
 }
-
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -103,16 +102,25 @@ app.delete('/products/delete/:id', wrapAsync(async (req, res, next) => {
     } = req.params;
     await Product.findByIdAndDelete(id);
     res.redirect(`/products`);
-}))
+}));
 
 app.use((err, req, res, next) => {
-    console.dir(err);
+    if (err.name === 'ValidationError') {
+        err.status = 404;
+        err.message = Object.values(err.errors).map(item => item.message);
+    }
+    
+    if(err.name === 'CastError') {
+        err.status = 404;
+        err.message = 'Product Unavailable';    
+    }
+    
     next(err);
 })
 
 app.use((err, req, res, next) => {
     const {
-        status = 500, message = 'terjadi kesalahan'
+        message = 'Something went wrong', status = 404
     } = err;
     res.status(status).send(message);
 })

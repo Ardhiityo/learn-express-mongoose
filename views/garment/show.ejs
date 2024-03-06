@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Show</title>
+  </head>
+  <body>
+    <h1><%= garment.name %></h1>
+
+    <ul>
+      <li>Brand : <%= garment.name %></li>
+      <li>Kontak : <%= garment.kontak %></li>
+      <li>Lokasi : <%= garment.lokasi %></li>
+    </ul>
+
+    <h1>Product</h1>
+    <ul>
+      <% for( const product of garment.product ) { %>
+      <a href="/products/<%= product.id %>">
+        <li><%= product.name %> - <%= product.brand %></li>
+      </a>
+      <% } %>
+    </ul>
+
+    <a href="/garment/<%= garment.id %>/products/create">Add Product</a> <br />
+    <a href="/garment">All Garments</a> <br />
+    <a href="/garment/edit/<%= garment.id %>"><button>Edit</button></a>
+    <form
+      action="/garment/<%= garment.id %>?_method=delete"
+      method="post"
+    >
+      <button type="submit">Delete</button>
+    </form>
+  </body>
+</html>

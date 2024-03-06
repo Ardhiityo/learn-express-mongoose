@@ -7,6 +7,7 @@ const app = express();
 const ErrorHandler = require('./ErrorHandler');
 
 const Product = require('./models/product');
+const Garment = require('./models/garment');
 
 mongoose.connect('mongodb://127.0.0.1/shop_db')
     .then(() => {
@@ -23,7 +24,6 @@ app.use(express.urlencoded({
 }));
 app.use(methodOverride('_method'));
 
-
 function wrapAsync(fn) {
     return function (req, res, next) {
         fn(req, res, next).catch((err) => next(err));
@@ -33,6 +33,42 @@ function wrapAsync(fn) {
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
+
+app.get('/garment', wrapAsync(async (req, res) => {
+    const garments = await Garment.find({});
+    res.render('garment/index', {
+        garments
+    });
+}));
+
+app.get('/garment/create', (req, res) => {
+    res.render('garment/create');
+});
+
+app.post('/garment', wrapAsync(async (req, res) => {
+    Garment.insertMany(req.body);
+    res.redirect('/garment');
+}))
+
+app.get('/garment/:id', wrapAsync(async (req, res) => {
+    const {
+        id
+    } = req.params;
+    const garment = await Garment.findById(id).populate('product');
+    res.render('garment/show', {
+        garment
+    });
+}));
+
+app.delete('/garment/:garment_id', wrapAsync(async (req, res) => {
+    const {
+        garment_id
+    } = req.params;
+    await Garment.findOneAndDelete({
+        _id: garment_id
+    });
+    res.redirect('/garment');
+}));
 
 app.get('/products', wrapAsync(async (req, res) => {
     const {
@@ -55,9 +91,35 @@ app.get('/products', wrapAsync(async (req, res) => {
     }
 }));
 
-app.get('/products/create', (req, res) => {
-    res.render('products/create');
+app.get('/garment/:garment_id/products/create', (req, res) => {
+    const {
+        garment_id
+    } = req.params;
+    res.render('products/create', {
+        garment_id
+    });
 });
+
+app.get('/garment/edit/:garment_id', wrapAsync(async (req, res) => {
+    const {
+        garment_id
+    } = req.params;
+    const garment = await Garment.findById(garment_id);
+    res.render('garment/edit', {
+        garment
+    });
+}));
+
+app.put('/garment/:garment_id', wrapAsync(async (req, res) => {
+    const {
+        garment_id
+    } = req.params;
+
+    const garment = await Garment.findByIdAndUpdate(garment_id, req.body, {
+        runValidators: true
+    });
+    res.redirect(`/garment/${garment_id}`);
+}));
 
 app.get('/products/edit/:id', wrapAsync(async (req, res, next) => {
     const {
@@ -74,7 +136,8 @@ app.get('/products/:id', wrapAsync(async (req, res, next) => {
     const {
         id
     } = req.params;
-    const products = await Product.findById(id);
+    const products = await Product.findById(id).populate('garment');
+    console.log(products);
     res.render('products/show', {
         products
     });
@@ -90,11 +153,19 @@ app.put('/products/:id', wrapAsync(async (req, res, next) => {
     res.redirect(`/products/${products.id}`);
 }));
 
-app.post('/products', (req, res, next) => {
+app.post('/products/:garment_id', wrapAsync(async (req, res, next) => {
+    const {
+        garment_id
+    } = req.params;
     const products = new Product(req.body);
+    const garment = await Garment.findById(garment_id);
+    garment.product.push(products);
+    products.garment = garment;
+
     products.save();
+    garment.save();
     res.redirect(`/products/${products.id}`);
-});
+}));
 
 app.delete('/products/delete/:id', wrapAsync(async (req, res, next) => {
     const {
@@ -109,12 +180,12 @@ app.use((err, req, res, next) => {
         err.status = 404;
         err.message = Object.values(err.errors).map(item => item.message);
     }
-    
-    if(err.name === 'CastError') {
+
+    if (err.name === 'CastError') {
         err.status = 404;
-        err.message = 'Product Unavailable';    
+        err.message = 'Product Unavailable';
     }
-    
+
     next(err);
 })
 

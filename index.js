@@ -5,6 +5,8 @@ const methodOverride = require('method-override');
 const morgan = require('morgan');
 const app = express();
 const ErrorHandler = require('./ErrorHandler');
+const session = require('express-session');
+const flash = require('connect-flash');
 
 const Product = require('./models/product');
 const Garment = require('./models/garment');
@@ -23,6 +25,16 @@ app.use(express.urlencoded({
     extended: true
 }));
 app.use(methodOverride('_method'));
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+}));
+app.use(flash());
+app.use((req, res, next) => {
+    res.locals.flash_message = req.flash('flash_message');
+    next();
+})
 
 function wrapAsync(fn) {
     return function (req, res, next) {
@@ -47,6 +59,7 @@ app.get('/garment/create', (req, res) => {
 
 app.post('/garment', wrapAsync(async (req, res) => {
     Garment.insertMany(req.body);
+    req.flash('flash_message', 'Data berhasil ditambah!');
     res.redirect('/garment');
 }))
 
